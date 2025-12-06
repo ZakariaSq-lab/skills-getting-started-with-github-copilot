@@ -142,3 +142,50 @@ footer {
   padding: 20px;
   color: #666;
 }
+
+/* Participants section styling */
+.participants {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #eee;
+}
+
+.participants h5 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.participants ul {
+  list-style: disc;
+  padding-left: 20px;
+  margin: 0;
+}
+
+.participants li {
+  margin: 6px 0;
+  font-size: 14px;
+  color: #444;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* subtle pill for each participant */
+.participant-pill {
+  background: #eef4ff;
+  color: #0b3a8a;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 12px;
+  border: 1px solid #d6e3ff;
+}
+
+/* When there are no participants */
+.participants .none {
+  font-style: italic;
+  color: #888;
+}

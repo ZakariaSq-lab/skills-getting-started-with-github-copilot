@@ -45,6 +45,114 @@
       <p>&copy; 2023 Mergington High School</p>
     </footer>
 
-    <script src="app.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const activitiesList = document.getElementById('activities-list');
+        const activitySelect = document.getElementById('activity');
+        const signupForm = document.getElementById('signup-form');
+        const messageEl = document.getElementById('message');
+
+        function showMessage(text, type = 'info') {
+          messageEl.textContent = text;
+          messageEl.className = '';
+          messageEl.classList.add('message', type);
+          messageEl.classList.remove('hidden');
+          setTimeout(() => messageEl.classList.add('hidden'), 4000);
+        }
+
+        function renderActivities(data) {
+          activitiesList.innerHTML = '';
+          activitySelect.innerHTML = '<option value="">-- Select an activity --</option>';
+
+          Object.keys(data).forEach(name => {
+            const activity = data[name];
+
+            // create activity card element
+            const card = document.createElement('div');
+            card.className = 'activity-card';
+
+            card.innerHTML = `
+              <h4>${name}</h4>
+              <p>${activity.description}</p>
+              <p><strong>Schedule:</strong> ${activity.schedule}</p>
+              <div class="participants">
+                <h5>Participants <span class="participant-count">(${activity.participants.length})</span></h5>
+                ${activity.participants.length ? `
+                  <ul>
+                    ${activity.participants.map(p => `<li><span class="participant-pill">${escapeHtml(p)}</span></li>`).join('')}
+                  </ul>` :
+                  `<div class="none">No participants yet.</div>`
+                }
+              </div>
+            `;
+
+            activitiesList.appendChild(card);
+
+            // add option to select
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            activitySelect.appendChild(opt);
+          });
+        }
+
+        function escapeHtml(str) {
+          return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+        }
+
+        // initial fetch
+        fetch('/activities')
+          .then(r => {
+            if (!r.ok) throw new Error('Failed to load activities');
+            return r.json();
+          })
+          .then(data => renderActivities(data))
+          .catch(() => {
+            activitiesList.innerHTML = '<p class="error">Unable to load activities at this time.</p>';
+          });
+
+        // signup handler
+        signupForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const email = document.getElementById('email').value.trim();
+          const activityName = activitySelect.value;
+
+          if (!email || !activityName) {
+            showMessage('Please provide both email and activity.', 'error');
+            return;
+          }
+
+          const url = `/activities/${encodeURIComponent(activityName)}/signup?email=${encodeURIComponent(email)}`;
+
+          fetch(url, { method: 'POST' })
+            .then(async res => {
+              const text = await res.text();
+              if (!res.ok) {
+                let detail = text || 'Signup failed';
+                try {
+                  const j = JSON.parse(text);
+                  detail = j.detail || detail;
+                } catch (_) {}
+                throw new Error(detail);
+              }
+              return text;
+            })
+            .then(() => {
+              showMessage(`Signed up ${email} for ${activityName}`, 'success');
+              // update UI participants list for that activity
+              // re-fetch full activities to keep things simple and consistent
+              return fetch('/activities');
+            })
+            .then(r => r.json())
+            .then(data => renderActivities(data))
+            .catch(err => showMessage(err.message || 'Signup failed', 'error'));
+        });
+      });
+    </script>
   </body>
 </html>
