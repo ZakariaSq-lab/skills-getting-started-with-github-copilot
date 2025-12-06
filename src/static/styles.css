@@ -160,18 +160,37 @@ footer {
 }
 
 .participants ul {
-  list-style: disc;
-  padding-left: 20px;
+  list-style: none;
+  padding-left: 0;
   margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .participants li {
-  margin: 6px 0;
+  margin: 0;
   font-size: 14px;
   color: #444;
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/* delete button beside participant */
+.delete-btn {
+  background: transparent;
+  border: none;
+  color: #c62828;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.delete-btn:hover {
+  background: rgba(198, 40, 40, 0.08);
 }
 
 /* subtle pill for each participant */

@@ -79,7 +79,7 @@
                 <h5>Participants <span class="participant-count">(${activity.participants.length})</span></h5>
                 ${activity.participants.length ? `
                   <ul>
-                    ${activity.participants.map(p => `<li><span class="participant-pill">${escapeHtml(p)}</span></li>`).join('')}
+                    ${activity.participants.map(p => `<li><span class="participant-pill">${escapeHtml(p)}</span><button class="delete-btn" data-activity="${escapeHtml(name)}" data-email="${escapeHtml(p)}" title="Unregister">×</button></li>`).join('')}
                   </ul>` :
                   `<div class="none">No participants yet.</div>`
                 }
@@ -105,8 +105,8 @@
             .replace(/'/g, '&#39;');
         }
 
-        // initial fetch
-        fetch('/activities')
+        // initial fetch (no-cache to ensure fresh data)
+        fetch('/activities', { cache: 'no-store' })
           .then(r => {
             if (!r.ok) throw new Error('Failed to load activities');
             return r.json();
@@ -145,12 +145,47 @@
             .then(() => {
               showMessage(`Signed up ${email} for ${activityName}`, 'success');
               // update UI participants list for that activity
-              // re-fetch full activities to keep things simple and consistent
-              return fetch('/activities');
+              // re-fetch full activities (force fresh) to keep things simple and consistent
+              return fetch('/activities', { cache: 'no-store' });
             })
             .then(r => r.json())
             .then(data => renderActivities(data))
             .catch(err => showMessage(err.message || 'Signup failed', 'error'));
+        });
+
+        // delegate click handler for unregister buttons
+        activitiesList.addEventListener('click', (e) => {
+          const btn = e.target.closest('.delete-btn');
+          if (!btn) return;
+          const activityName = btn.getAttribute('data-activity');
+          const email = btn.getAttribute('data-email');
+
+          if (!activityName || !email) return;
+
+          if (!confirm(`Unregister ${email} from ${activityName}?`)) return;
+
+          const url = `/activities/${encodeURIComponent(activityName)}/unregister?email=${encodeURIComponent(email)}`;
+
+          fetch(url, { method: 'DELETE' })
+            .then(async res => {
+              const text = await res.text();
+              if (!res.ok) {
+                let detail = text || 'Unregister failed';
+                try {
+                  const j = JSON.parse(text);
+                  detail = j.detail || detail;
+                } catch (_) {}
+                throw new Error(detail);
+              }
+              return text;
+            })
+            .then(() => {
+              showMessage(`Unregistered ${email} from ${activityName}`, 'success');
+              return fetch('/activities', { cache: 'no-store' });
+            })
+            .then(r => r.json())
+            .then(data => renderActivities(data))
+            .catch(err => showMessage(err.message || 'Unregister failed', 'error'));
         });
       });
     </script>
